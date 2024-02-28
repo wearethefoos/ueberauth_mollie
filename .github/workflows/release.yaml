@@ -1,0 +1,31 @@
+name: Create Main Release
+
+# Trigger the workflow on release activity
+on:
+  push:
+    paths-ignore:
+      - "test/**"
+      - ".formatter.exs"
+      - ".gitignore"
+      - "README.md"
+      - "docker-compose.yml"
+      - "CHANGELOG.md"
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: google-github-actions/release-please-action@v3
+        id: release
+        with:
+          token: ${{ secrets.CIRCUITS_TOKEN }}
+          release-type: elixir
+          package-name: ueberauth_mollie
+          extra-files: |
+            README.md
+
+      - uses: actions/checkout@v3
