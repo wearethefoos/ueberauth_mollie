@@ -65,6 +65,34 @@ defmodule Ueberauth.Strategy.Mollie.OAuth do
     |> OAuth2.Client.get(url, headers, opts)
   end
 
+  def post(token, url, body \\ "", headers \\ [], opts \\ []) do
+    [token: token]
+    |> client
+    |> put_param("client_secret", client().client_secret)
+    |> OAuth2.Client.post(url, body, headers, opts)
+  end
+
+  def put(token, url, body \\ "", headers \\ [], opts \\ []) do
+    [token: token]
+    |> client
+    |> put_param("client_secret", client().client_secret)
+    |> OAuth2.Client.put(url, body, headers, opts)
+  end
+
+  def patch(token, url, body \\ "", headers \\ [], opts \\ []) do
+    [token: token]
+    |> client
+    |> put_param("client_secret", client().client_secret)
+    |> OAuth2.Client.patch(url, body, headers, opts)
+  end
+
+  def delete(token, url, headers \\ [], opts \\ []) do
+    [token: token]
+    |> client
+    |> put_param("client_secret", client().client_secret)
+    |> OAuth2.Client.delete(url, headers, opts)
+  end
+
   def get_token!(params \\ [], options \\ []) do
     headers = Keyword.get(options, :headers, [])
     options = Keyword.get(options, :options, [])

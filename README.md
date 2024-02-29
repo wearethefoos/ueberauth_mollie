@@ -65,7 +65,7 @@ config :ueberauth, Ueberauth.Strategy.Mollie.OAuth,
 Once you obtained a token, you may use the OAuth client directly:
 
 ```elixir
-Ueberauth.Strategy.Mollie.OAuth.get("/organizations/me")
+Ueberauth.Mollie.get(token, "/organizations/me")
 ```
 
 See the [Mollie API Docs](https://docs.mollie.com/index) for more information. Note that the provided client knows about the `/v2` prefix already.
