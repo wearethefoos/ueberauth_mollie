@@ -20,7 +20,9 @@ Add the Strategy to your Ueberauth strategies:
 # config/config.exs
 config :ueberauth, Ueberauth,
   providers: [
-    mollie: {Ueberauth.Strategy.Mollie, []}
+    mollie: {Ueberauth.Strategy.Mollie, [
+      scopes: "organizations.read payments.read"
+    ]}
   ]
 ```
 
