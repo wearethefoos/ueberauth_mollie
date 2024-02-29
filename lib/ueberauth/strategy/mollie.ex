@@ -12,7 +12,9 @@ defmodule Ueberauth.Strategy.Mollie do
 
       config :ueberauth, Ueberauth,
         providers: [
-          mollie: { Ueberauth.Strategy.Mollie, [] }
+          mollie: { Ueberauth.Strategy.Mollie, [
+            scopes: "organizations.read payments.read"
+          ] }
         ]
 
   You can use a tool like [localtunnel](https://theboroer.github.io/localtunnel-www/) to expose your local server to the internet for testing.
@@ -67,7 +69,7 @@ defmodule Ueberauth.Strategy.Mollie do
   """
   use Ueberauth.Strategy,
     uid_field: :id,
-    default_scope: "organizations.read profiles.read payments.read payments.write",
+    default_scope: "organizations.read",
     oauth2_module: Ueberauth.Strategy.Mollie.OAuth
 
   alias Ueberauth.Auth.Credentials
@@ -80,7 +82,7 @@ defmodule Ueberauth.Strategy.Mollie do
   Handles the initial redirect to the Mollie authentication page.
   """
   def handle_request!(conn) do
-    scopes = conn.params["scope"] || option(conn, :default_scope)
+    scopes = conn.params["scope"] || option(conn, :scope) || option(conn, :default_scope)
 
     params =
       [scope: scopes]
@@ -95,31 +97,6 @@ defmodule Ueberauth.Strategy.Mollie do
     module = option(conn, :oauth2_module)
     redirect!(conn, apply(module, :authorize_url!, [params, opts]))
   end
-
-  # def handle_request!(conn) do
-  #   send_redirect_uri = Keyword.get(options(conn), :send_redirect_uri, true)
-
-  #   opts =
-  #     if send_redirect_uri do
-  #       [redirect_uri: callback_url(conn)]
-  #     else
-  #       []
-  #     end
-
-  #   opts =
-  #     opts
-  #     |> with_state_param(conn)
-
-  #   if conn.params["state"], do: Keyword.put(opts, :state, conn.params["state"]), else: opts
-
-  #   opts =
-  #     if conn.params["scope"],
-  #       do: Keyword.put(opts, :scope, conn.params["scope"]),
-  #       else: Keyword.put(opts, :scope, option(conn, :default_scope))
-
-  #   module = option(conn, :oauth2_module)
-  #   redirect!(conn, apply(module, :authorize_url!, [opts]))
-  # end
 
   @doc """
   Handles the callback from Mollie Connect.
