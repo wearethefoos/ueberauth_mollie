@@ -101,26 +101,13 @@ defmodule Ueberauth.Strategy.Mollie.OAuth do
     client.token
   end
 
-  def refresh_auth_token!(params \\ [], options \\ []) do
+  def refresh_auth_token!(token, params \\ [], options \\ []) do
     headers = Keyword.get(options, :headers, [])
     options = Keyword.get(options, :options, [])
-    client_options = Keyword.get(options, :client_options, [])
+    client_options = Keyword.get(options, :client_options, token: token)
 
-    client = client(client_options)
-
-    request =
-      client
-      |> put_param("client_secret", client.client_secret)
-      |> put_header("Accept", "application/json")
-      |> Mollie.AuthCode.refresh_auth_token(params, headers)
-
-    case OAuth2.Client.post(
-           request,
-           client.token_url,
-           request.params,
-           request.headers
-         ) do
-      {:ok, response} -> {:ok, OAuth2.AccessToken.new(response.body)}
+    case OAuth2.Client.refresh_token(client(client_options), params, headers, options) do
+      {:ok, response} -> {:ok, response.token}
       {:error, error} -> {:error, error}
     end
   end

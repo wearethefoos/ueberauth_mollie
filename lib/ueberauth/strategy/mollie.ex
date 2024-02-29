@@ -98,31 +98,6 @@ defmodule Ueberauth.Strategy.Mollie do
     redirect!(conn, apply(module, :authorize_url!, [params, opts]))
   end
 
-  # def handle_request!(conn) do
-  #   send_redirect_uri = Keyword.get(options(conn), :send_redirect_uri, true)
-
-  #   opts =
-  #     if send_redirect_uri do
-  #       [redirect_uri: callback_url(conn)]
-  #     else
-  #       []
-  #     end
-
-  #   opts =
-  #     opts
-  #     |> with_state_param(conn)
-
-  #   if conn.params["state"], do: Keyword.put(opts, :state, conn.params["state"]), else: opts
-
-  #   opts =
-  #     if conn.params["scope"],
-  #       do: Keyword.put(opts, :scope, conn.params["scope"]),
-  #       else: Keyword.put(opts, :scope, option(conn, :default_scope))
-
-  #   module = option(conn, :oauth2_module)
-  #   redirect!(conn, apply(module, :authorize_url!, [opts]))
-  # end
-
   @doc """
   Handles the callback from Mollie Connect.
   When there is a failure from Mollie the failure is included in the
