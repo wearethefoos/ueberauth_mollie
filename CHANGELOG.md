@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0](https://github.com/wearethefoos/ueberauth_mollie/compare/v1.1.0...v1.2.0) (2024-04-05)
+
+
+### Features
+
+* **Release:** Implement CI flow ([9d0990b](https://github.com/wearethefoos/ueberauth_mollie/commit/9d0990b770ea9995f910551216d1857b7b42b441))
+* **Release:** Implement release automation ([debe846](https://github.com/wearethefoos/ueberauth_mollie/commit/debe846451262be2a959dc8ab89c84f1a194b1d9))
+
 ## [1.1.0](https://github.com/wearethefoos/ueberauth_mollie/compare/v1.0.0...v1.1.0) (2024-04-05)
 
 
