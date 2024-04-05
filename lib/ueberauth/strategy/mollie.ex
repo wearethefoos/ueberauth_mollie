@@ -190,7 +190,7 @@ defmodule Ueberauth.Strategy.Mollie do
     conn = put_private(conn, :mollie_token, token)
 
     # the userinfo_endpoint may be overridden in options when necessary.
-    resp = Ueberauth.Strategy.Mollie.OAuth.get(token, get_userinfo_endpoint(conn))
+    resp = OAuthModule.get(token, get_userinfo_endpoint(conn))
 
     case resp do
       {:ok, %OAuth2.Response{status_code: 401, body: body}} ->

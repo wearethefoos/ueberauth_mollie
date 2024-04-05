@@ -102,10 +102,6 @@ defmodule Ueberauth.Strategy.Mollie.OAuth do
       {:error, %OAuth2.Error{reason: reason}} ->
         {:error, {"error", to_string(reason)}}
 
-      {:ok, %OAuth2.Client{token: %{access_token: nil} = token}} ->
-        %{"error" => error, "error_description" => description} = token.other_params
-        {:error, {error, description}}
-
       {:ok, %OAuth2.Client{token: token}} ->
         {:ok, token}
     end

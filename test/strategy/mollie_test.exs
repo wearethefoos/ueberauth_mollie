@@ -6,6 +6,8 @@ defmodule Ueberauth.Strategy.MollieTest do
   import Plug.Conn
   import Ueberauth.Strategy.Helpers
 
+  alias Plug.Conn
+
   setup_with_mocks([
     {OAuth2.Client, [:passthrough],
      [
@@ -126,7 +128,7 @@ defmodule Ueberauth.Strategy.MollieTest do
              "response_type" => "code",
              "scope" => "organizations.read",
              "state" => csrf_state
-           } = Plug.Conn.Query.decode(redirect_uri.query)
+           } = Conn.Query.decode(redirect_uri.query)
 
     assert is_nil(csrf_state) == false
   end
