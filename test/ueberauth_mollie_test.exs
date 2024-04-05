@@ -1,8 +1,5 @@
 defmodule UeberauthMollieTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
+  use Plug.Test
   doctest UeberauthMollie
-
-  test "greets the world" do
-    assert UeberauthMollie.hello() == :world
-  end
 end

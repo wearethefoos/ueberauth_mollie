@@ -10,7 +10,9 @@ defmodule UeberauthMollie.MixProject do
       version: @version,
       elixir: "~> 1.15",
       start_permanent: Mix.env() == :prod,
+      aliases: aliases(),
       deps: deps(),
+      dialyzer: dialyzer(),
       docs: docs(),
       package: package()
     ]
@@ -28,8 +30,13 @@ defmodule UeberauthMollie.MixProject do
     [
       {:oauth2, "~> 1.0 or ~> 2.0"},
       {:ueberauth, "~> 0.10"},
-      {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
-      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
+      {:tesla, "~> 1.4"},
+      {:hackney, "~> 1.17"},
+      {:jason, ">= 1.0.0"},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
+      {:dialyxir, "~> 1.4.1", only: [:dev], runtime: false},
+      {:mock, "~> 0.3", only: :test}
     ]
   end
 
@@ -58,6 +65,25 @@ defmodule UeberauthMollie.MixProject do
         Changelog: "https://hexdocs.pm/ueberauth_mollie/changelog.html",
         GitHub: @source_url
       }
+    ]
+  end
+
+  defp aliases do
+    [
+      setup: ["deps.get", "lint.setup"],
+      "lint.setup": ["dialyzer --plt"],
+      lint: [
+        "format --check-formatted",
+        "credo --strict",
+        "dialyzer --no-check"
+      ]
+    ]
+  end
+
+  defp dialyzer do
+    [
+      plt_core_path: "priv/plts",
+      plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
     ]
   end
 end

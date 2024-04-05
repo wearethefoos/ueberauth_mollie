@@ -70,13 +70,13 @@ defmodule Ueberauth.Strategy.Mollie do
   use Ueberauth.Strategy,
     uid_field: :id,
     default_scope: "organizations.read",
-    oauth2_module: Ueberauth.Strategy.Mollie.OAuth
+    userinfo_endpoint: "/organizations/me"
 
   alias Ueberauth.Auth.Credentials
   alias Ueberauth.Auth.Extra
   alias Ueberauth.Auth.Info
 
-  alias __MODULE__
+  alias Ueberauth.Strategy.Mollie.OAuth, as: OAuthModule
 
   @doc """
   Handles the initial redirect to the Mollie authentication page.
@@ -94,8 +94,7 @@ defmodule Ueberauth.Strategy.Mollie do
 
     opts = oauth_client_options_from_conn(conn)
 
-    module = option(conn, :oauth2_module)
-    redirect!(conn, apply(module, :authorize_url!, [params, opts]))
+    redirect!(conn, OAuthModule.authorize_url!(params, opts))
   end
 
   @doc """
@@ -105,15 +104,15 @@ defmodule Ueberauth.Strategy.Mollie do
   returned in the `Ueberauth.Auth` struct.
   """
   def handle_callback!(%Plug.Conn{params: %{"code" => code}} = conn) do
-    module = option(conn, :oauth2_module)
-    token = apply(module, :get_token!, [[code: code]])
+    params = [code: code]
+    opts = oauth_client_options_from_conn(conn)
 
-    if token.access_token == nil do
-      set_errors!(conn, [
-        error(token.other_params["error"], token.other_params["error_description"])
-      ])
-    else
-      fetch_user(conn, token)
+    case OAuthModule.get_access_token(params, opts) do
+      {:ok, token} ->
+        fetch_user(conn, token)
+
+      {:error, {error_code, error_description}} ->
+        set_errors!(conn, [error(error_code, error_description)])
     end
   end
 
@@ -190,25 +189,37 @@ defmodule Ueberauth.Strategy.Mollie do
   defp fetch_user(conn, token) do
     conn = put_private(conn, :mollie_token, token)
 
-    # Will be better with Elixir 1.3 with/else
-    case Mollie.OAuth.get(token, "/organizations/me") do
-      {:ok, %OAuth2.Response{status_code: 401, body: _body}} ->
-        set_errors!(conn, [error("token", "unauthorized")])
+    # the userinfo_endpoint may be overridden in options when necessary.
+    resp = Ueberauth.Strategy.Mollie.OAuth.get(token, get_userinfo_endpoint(conn))
 
-      {:ok, %OAuth2.Response{status_code: status_code, body: user_data}}
+    case resp do
+      {:ok, %OAuth2.Response{status_code: 401, body: body}} ->
+        set_errors!(conn, [error("token", "unauthorized" <> body)])
+
+      {:ok, %OAuth2.Response{status_code: status_code, body: user}}
       when status_code in 200..399 ->
         json_library = Ueberauth.json_library()
-        {:ok, decoded_user_data} = json_library.decode(user_data)
-        put_private(conn, :mollie_user, decoded_user_data)
+        user_decoded = json_library.decode!(user)
+        put_private(conn, :mollie_user, user_decoded)
+
+      {:error, %OAuth2.Response{status_code: status_code}} ->
+        set_errors!(conn, [error("OAuth2", "#{status_code}")])
 
       {:error, %OAuth2.Error{reason: reason}} ->
         set_errors!(conn, [error("OAuth2", reason)])
+    end
+  end
 
-      {:error, %OAuth2.Response{body: %{"message" => reason}}} ->
-        set_errors!(conn, [error("OAuth2", reason)])
+  defp get_userinfo_endpoint(conn) do
+    case option(conn, :userinfo_endpoint) do
+      {:system, varname, default} ->
+        System.get_env(varname) || default
 
-      {:error, _} ->
-        set_errors!(conn, [error("OAuth2", "uknown error")])
+      {:system, varname} ->
+        System.get_env(varname) || Keyword.get(default_options(), :userinfo_endpoint)
+
+      other ->
+        other
     end
   end
 

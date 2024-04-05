@@ -25,3 +25,6 @@ ueberauth_mollie-*.tar
 # Temporary files, for example, from tests.
 /tmp/
 .DS_Store
+
+/priv/
+/.elixir_ls

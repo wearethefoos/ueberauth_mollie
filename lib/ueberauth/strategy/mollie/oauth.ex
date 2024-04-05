@@ -1,3 +1,5 @@
+require Logger
+
 defmodule Ueberauth.Strategy.Mollie.OAuth do
   @moduledoc """
   An implementation of OAuth2 for Mollie.
@@ -37,14 +39,12 @@ defmodule Ueberauth.Strategy.Mollie.OAuth do
       |> check_credential(:client_id)
       |> check_credential(:client_secret)
 
-    client_opts =
-      @defaults
-      |> Keyword.merge(config)
-      |> Keyword.merge(opts)
-
     json_library = Ueberauth.json_library()
 
-    OAuth2.Client.new(client_opts)
+    @defaults
+    |> Keyword.merge(config)
+    |> Keyword.merge(opts)
+    |> OAuth2.Client.new()
     |> OAuth2.Client.put_serializer("application/json", json_library)
   end
 
@@ -91,6 +91,24 @@ defmodule Ueberauth.Strategy.Mollie.OAuth do
     |> client
     |> put_param("client_secret", client().client_secret)
     |> OAuth2.Client.delete(url, headers, opts)
+  end
+
+  def get_access_token(params \\ [], opts \\ []) do
+    case opts |> client |> OAuth2.Client.get_token(params) do
+      {:error, %OAuth2.Response{body: %{"error" => error}} = response} ->
+        description = Map.get(response.body, "error_description", "")
+        {:error, {error, description}}
+
+      {:error, %OAuth2.Error{reason: reason}} ->
+        {:error, {"error", to_string(reason)}}
+
+      {:ok, %OAuth2.Client{token: %{access_token: nil} = token}} ->
+        %{"error" => error, "error_description" => description} = token.other_params
+        {:error, {error, description}}
+
+      {:ok, %OAuth2.Client{token: token}} ->
+        {:ok, token}
+    end
   end
 
   def get_token!(params \\ [], options \\ []) do
@@ -160,5 +178,39 @@ defmodule Ueberauth.Strategy.Mollie.OAuth do
 
   defp check_config_key_exists(_, _) do
     raise "Config :ueberauth, Ueberauth.Strategy.Mollie is not a keyword list, as expected"
+  end
+
+  @spec parse_response(
+          {:ok, OAuth2.Response.t()}
+          | {:error, OAuth2.Response.t()}
+          | {:error, OAuth2.Error.t()}
+        ) :: {:ok, map()} | {:error, :unauthorized | :unexpected_response | :unknown | binary()}
+  def parse_response({:ok, %OAuth2.Response{status_code: 401, body: _body}}) do
+    {:error, :unauthorized}
+  end
+
+  def parse_response({:ok, %OAuth2.Response{status_code: status_code, body: data}})
+      when status_code in 200..399 do
+    json_library = Ueberauth.json_library()
+    {:ok, decoded_data} = json_library.decode(data)
+    {:ok, decoded_data}
+  end
+
+  def parse_response({:ok, %OAuth2.Response{status_code: status_code, body: data}}) do
+    Logger.error("Unexpected response: #{status_code} - #{data}")
+    {:error, :unexpected_response}
+  end
+
+  def parse_response({:error, %OAuth2.Error{reason: reason}}) do
+    {:error, reason}
+  end
+
+  def parse_response({:error, %OAuth2.Response{body: %{"message" => reason}}}) do
+    {:error, reason}
+  end
+
+  def parse_response({:error, err}) do
+    Logger.error(err)
+    {:error, :unknown}
   end
 end
