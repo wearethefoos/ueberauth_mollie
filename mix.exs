@@ -2,7 +2,7 @@ defmodule UeberauthMollie.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/wearethefoos/ueberauth_mollie"
-  @version "1.0.0"
+  @version "1.1.0"
 
   def project do
     [
